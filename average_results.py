@@ -4,11 +4,16 @@ import os
 import sys
 import time
 from datetime import datetime
+from twython import Twython
+from auth import (consumer_key, consumer_secret, access_token, access_token_secret)
 
 # Empty lists to read in values from files and later used to calculate averages
 pingResults = []
 downloadResults = []
 uploadResults = []
+
+# Initialise twitter
+twitter = Twython(consumer_key, consumer_secret, access_token, access_token_secret)
 
 # Averages Method
 def averages():
@@ -16,6 +21,7 @@ def averages():
     # Create a timestamp
     timeStamp = time.time()
     date = datetime.fromtimestamp(timeStamp).strftime("%Y-%m-%d %H:%M:%S")
+    dateShort = datetime.fromtimestamp(timeStamp).strftime("%y-%m-%d %H:%M")
 
     # Average Ping
     with open("/home/pi/speedcomplainer/v1/pingResults.log", "r+") as pingFile:
@@ -25,6 +31,9 @@ def averages():
             pingResults.append(pingFloat)
 
     lastHoursPings = pingResults[-12:]
+
+    lowestPingOfHour = min(lastHoursPings)
+    maxPingOfHour = max(lastHoursPings)
 
     sumOfHourlyPings = sum(lastHoursPings)
 
@@ -43,6 +52,9 @@ def averages():
 
     lastHoursDownloads = downloadResults[-12:]
 
+    lowestDownloadOfHour = min(lastHoursDownloads)
+    maxDownloadOfHour = max(lastHoursDownloads)
+
     sumOfHourlyDownloads = sum(lastHoursDownloads)
 
     numOfDownloads = len(downloadResults)
@@ -59,6 +71,10 @@ def averages():
             uploadResults.append(uploadFloat)
 
     lastHoursUploads = uploadResults[-12:]
+
+    lowestUploadOfHour = min(lastHoursUploads)
+    maxUploadOfHour = max(lastHoursUploads)
+
     sumOfHourlyUploads = sum(lastHoursUploads)
 
     numOfUploads = len(uploadResults)
@@ -88,5 +104,14 @@ def averages():
     with open("/home/pi/speedcomplainer/v1/averageTestResults.log", "a") as resultFile:
         resultFile.write(formattedResult)
         resultFile.close()
+
+    tweet = """Hourly average speed test results
+-DL(Mb/s): %.2f (max:%.2f/min:%.2f)
+-UL(Mb/s): %.2f (max:%.2f/min:%.2f)
+-Ping(ms): %.2f (max:%.2f/min:%.2f)
+Tests: %d
+#Python #RaspberryPi #SpeedTest""" % (averageHourlyDownload,  maxDownloadOfHour, lowestDownloadOfHour, averageHourlyUpload, maxUploadOfHour, lowestUploadOfHour, averageHourlyPing, maxPingOfHour, lowestPingOfHour, numOfUploads)
+    print(tweet)
+    twitter.update_status(status=tweet)
 
 averages()

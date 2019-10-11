@@ -4,11 +4,14 @@ import os
 import sys
 import time
 from datetime import datetime
-import twitter
-import random
+from twython import Twython
+from auth import (consumer_key, consumer_secret, access_token, access_token_secret)
 
 # Expected download speed
 expected = float(55.00)
+
+# Initialise twitter
+twitter = Twython(consumer_key, consumer_secret, access_token, access_token_secret)
 
 # Method
 def speedTest():
@@ -55,22 +58,5 @@ def speedTest():
     with open("/home/pi/speedcomplainer/v1/uploadResults.log", "a") as uploadFile:
         uploadFile.write("%s\n" % uploadSpeed)
         uploadFile.close()
-
-    # Twitter
-    TOKEN = ""
-    TOKEN_KEY = ""
-    CON_SEC=""
-    CON_SEC_KEY=""
-
-    my_auth = twitter.OAuth(TOKEN,TOKEN_KEY,CON_SEC,CON_SEC_KEY)
-    twit = twitter.Twitter(auth=my_auth)
-
-    # If speed is less than 55 send a tweet
-    if downloadSpeed < expected:
-        try:
-            tweet = "%s -download (Mb/s): %.2f -upload (Mb/s): %.2f -ping (s): %.2f" % (date, downloadSpeed, uploadSpeed, ping)
-            twit.statuses.update(status=tweet)
-        except Exception,e:
-            pass
 
 speedTest()
